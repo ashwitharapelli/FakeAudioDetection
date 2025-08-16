@@ -1,0 +1,304 @@
+{% if not session.get('username') %}
+  <script>
+    window.location.href = "/login";
+  </script>
+{% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Audio Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            /*background: url('/static/images/images.jpg') no-repeat center center/cover;*/
+            background: linear-gradient(to right, #f8f9fa, #e0eafc);
+            background-size: cover;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 10px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            position: fixed;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .sidebar a:hover {
+            background-color: #34495e;
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 200px;
+            padding: 30px;
+            width: 100%;
+            background: linear-gradient(to right, #f8f9fa, #e0eafc);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            background-color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    {% if session.get('username') %}
+    <div class="sidebar">
+        <h2>📂 Menu</h2>
+        <a href="#" onclick="loadSection('account')">👤 Account</a>
+        <a href="#" onclick="loadSection('home')">🏠 Home</a>
+        <a href="#" onclick="loadSection('about')">ℹ️ About</a>
+        <a href="/logout" onclick="return true;">📜 Logout</a>
+
+    </div>
+    {% endif %}
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dynamic content goes here -->
+        <div id="contentArea">
+            <div class="container">
+                <h1>🎙️ Fake Audio Detection</h1>
+                <p>Upload an audio file (.wav) to check if it's <strong>Real</strong> or <strong>Fake</strong></p>
+
+                <!-- Audio Upload Form -->
+                <input type="file" id="audioFile" accept=".wav">
+                <button onclick="uploadAudio()">Upload and Check</button>
+
+                <br><br>
+                <!-- Audio Player -->
+                <audio id="audioPlayer" controls style="display: none;"></audio>
+                <input type="hidden" name="audio_url" id="audioUrl" value="">
+
+              
+                <div id="mic-section" style="margin-top: 20px;">
+                    <h3>🎤 Record with Microphone</h3>
+                    <button id="recordBtn">Start Recording</button>
+                    <button id="stopBtn" disabled>Stop Recording</button>
+                    <audio id="audioPlayback" controls style="display:none; margin-top:10px;"></audio>
+                    <div id="recordingResult" style="margin-top: 10px; font-weight: bold;"></div> 
+                </div>
+                <!-- Result Section -->
+                <div id="result" style="display: none;">
+                    <h3>Prediction: <span id="resultText"></span></h3>
+                    <p>Confidence: <span id="confidence"></span></p>
+                </div>
+
+                <!-- Report Section -->
+                <div id="reportSection" style="display: none; margin-top: 20px;">
+                    <input type="text" id="phoneNumber" placeholder="Enter mobile number with country code" style="padding: 8px; width: 80%;" />
+                    <br><br>
+                    <button onclick="sendReport()">Send Report</button>
+                    <button onclick="downloadPDF()" disabled>Download Report as PDF</button> <!-- 🔄 NEW -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let latestResult = null;
+        let uploadedAudio = null;
+
+        async function uploadAudio() {
+            const fileInput = document.getElementById('audioFile');
+            if (!fileInput.files.length) {
+                alert('Please select an audio file first!');
+                return;
+            }
+
+            const formData = new FormData();
+            uploadedAudio = fileInput.files[0];
+            formData.append('audio', uploadedAudio);
+
+            const response = await fetch('/predict', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            const audioURL = URL.createObjectURL(uploadedAudio);
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioURL;
+            audioPlayer.style.display = 'block';
+            document.getElementById('audioUrl').value = audioURL;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('resultText').innerText = result.label;
+            document.getElementById('confidence').innerText = (result.confidence * 100).toFixed(2) + '%';
+
+            latestResult = result;
+            document.getElementById('reportSection').style.display = 'block';
+        }
+
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('recordBtn').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+            mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioURL = URL.createObjectURL(blob);
+            const audioPlayback = document.getElementById('audioPlayback');
+            audioPlayback.src = audioURL;
+            audioPlayback.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('audio', blob, 'recorded_audio.wav');
+
+            const response = await fetch('/predict', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            const label = result.label || 'undefined';
+            const confidence = result.confidence !== undefined ? (parseFloat(result.confidence) * 100).toFixed(2) : 'NaN';
+
+            document.getElementById('recordingResult').innerText = `🎙 Prediction: ${label} | 📊 Confidence: ${confidence}%`;
+
+            uploadedAudio = blob;
+            latestResult = { label, confidence };
+            document.getElementById('reportSection').style.display = 'block';
+            };
+
+            mediaRecorder.start();
+            document.getElementById('recordBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            mediaRecorder.stop();
+            document.getElementById('recordBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
+
+
+        async function sendReport() {
+    const phone = document.getElementById('phoneNumber').value.trim();
+    if (!phone) {
+        alert("Please enter a phone number.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('audio', uploadedAudio);
+    formData.append('phone', phone);
+    formData.append('label', latestResult.label);
+    formData.append('confidence', latestResult.confidence);
+
+    const response = await fetch('/send-report', {
+        method: 'POST',
+        body: formData
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        alert("Report sent successfully!");
+        document.querySelector("button[onclick='downloadPDF()']").disabled = false;  // 🔄 NEW
+    } else {
+        alert("Error: " + result.error);
+    }
+}
+
+        function loadSection(section) {
+            const contentArea = document.getElementById('contentArea');
+
+            if (section === 'home') {
+                location.reload(); // Go back to main interface
+            } else {
+                // Load external HTML file like about.html or others
+                fetch(`/${section}.html`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Page not found');
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        contentArea.innerHTML = html;
+                    })
+                    .catch(error => {
+                        contentArea.innerHTML = `<p>⚠️ Error loading ${section} page.</p>`;
+                        console.error(error);
+                    });
+            }
+        }
+        function downloadPDF() {
+                const phone = document.getElementById('phoneNumber').value.trim();
+                const audioUrl = document.getElementById('audioUrl').value;
+                if (!phone) {
+                    alert("Please enter a phone number to include in the report.");
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('phone', phone);
+                formData.append('label', latestResult.label);
+                formData.append('confidence', latestResult.confidence);
+                formData.append('filename', uploadedAudio.name);
+                formData.append('audio_url', audioUrl); 
+                fetch('/download-report', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to generate PDF');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'Fake_Audio_Report.pdf';
+                    link.click();
+                })
+                .catch(error => alert("Error: " + error.message));
+            }
+
+    </script>
+</body>
+</html>
+

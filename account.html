@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #f0f2f5, #d9e4f5);
+      display: flex;
+      height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar animation */
+    .sidebar {
+      width: 220px;
+      background-color: #2c3e50;
+      color: white;
+      padding: 30px 15px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 24px;
+      color: #ecf0f1;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      color: white;
+      padding: 12px 15px;
+      margin: 8px 0;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #34495e;
+      transform: scale(1.05);
+    }
+
+    /* Main content animation */
+    .main-content {
+    margin-left: 200px; /* to account for sidebar */
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* align to the start (left side) */
+    padding-left: 10px; /* adjust this to control how much it moves */
+    background: linear-gradient(to right, #f8f9fa, #e0eafc);
+    animation: fadeInScale 1s ease-out;
+}
+
+.container {
+    max-width: 500px;
+    width: 90%;
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-align: left;
+    transition: transform 0.3s ease;
+    animation: fadeUp 1s ease;
+}
+
+
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    strong {
+      color: #34495e;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Dashboard</h2>
+    <a href="/"><span>🏠</span> Home</a>
+    <a href="/about.html"><span>ℹ️</span> About</a>
+    <a href="/account.html"><span>👤</span> Account</a>
+    <a href="/logout"><span>🚪</span> Logout</a>
+  </div>
+
+  <div class="main-content">
+    <div class="container">
+      <h1>📄 Account Details</h1>
+      {% if 'username' in session %}
+        <p><strong>🧑 Username:</strong> {{ session.username }}</p>
+        <p><strong>📧 Email:</strong> {{ session.email }}</p>
+        <p><strong>📱 Phone:</strong> {{ session.phone }}</p>
+        <p><strong>🎂 Age:</strong> {{ session.age }}</p>
+      {% else %}
+        <p>Please log in to view your account details.</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
