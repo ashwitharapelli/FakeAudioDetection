@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> !-->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            background: url('/static/images/image2.jpg') no-repeat center center/cover;
+            padding-left: 50px;
+        }
+        .container {
+            background: rgb(43, 66, 66);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: #0d0d0d;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #e3e8de;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.3);
+        }
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .form-group button:hover {
+            background: #0056b3;
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #007BFF;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .toggle-btn:hover {
+            color: #0056b3;
+        }
+        .warning {
+            color: red;
+            font-size: 12px;
+            display: none;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-form">
+        <h2>Sign Up</h1>
+
+        {% if session.get('message') %}
+            <p style="color:blue;">{{ session.pop('message') }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required><br><br>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required><br><br>
+
+            <label for="phone">Phone Number</label>
+            <input type="text" id="phone" name="phone" required><br><br>
+
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" required><br><br>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required><br><br>
+
+            <button type="submit">Sign Up</button>
+            </div>
+        </form>
+
+        <p>Already have an account? <a  style="color:rgb(23, 225, 165);" href="{{ url_for('login') }}">Log in here</a></p>
+        </div>
+    </div>
+</body>
+</html>
